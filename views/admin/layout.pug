@@ -1,0 +1,33 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title E-Shop - Admin Panel
+    // Favicon link
+    link(rel="icon" href="/images/favicon.webp" type="image/x-icon")
+    // Stylesheets
+    link(rel="stylesheet", href="/stylesheets/style.css")
+    link(rel="stylesheet", href="/stylesheets/responsive.css")
+
+  body
+    .admin-layout
+      // Sidebar Section
+      aside.admin-sidebar
+        h3 🏢 E-Shop Admin
+        nav.admin-nav
+          a.nav-item(href="/admin") 📊 Dashboard
+          a.nav-item(href="/admin/products") 📦 Products
+          a.nav-item(href="/admin/products/add") ➕ Add Product
+          a.nav-item(href="/admin/orders") 📋 Orders
+          a.nav-item(href="/") 🏠 Back to Store
+
+      // Main Content Section
+      main.admin-content
+        block content
+
+    // Hero Section
+    section.hero
+      .hero-inner(style="text-align: center;")
+        h1.hero-title Welcome to E-Shop Admin Panel
+        p.hero-sub Manage your store products and orders efficiently.
