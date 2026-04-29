@@ -1,35 +1,132 @@
-extends ../layout
+﻿extends ../layout
 
 block content
   if product
-    .container(style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 3rem auto; align-items: start;")
-      .product-images
-        .product-media(style="width: 100%; height: 500px; margin-bottom: 1rem; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.15); background: #f5f5f5; display: flex; align-items: center; justify-content: center; position: relative;")
-          if product.image && product.image.length > 0
-            img(
-              src=imageUrl(product.image),
-              alt=product.name,
-              style="width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform 0.3s ease; display: block;"
-            )
-          else
-            span(style="font-size: 4rem; color: #ddd;") 📦
+    - const ratingValue = Number(product.rating || 0)
+    - const reviewCount = Number(product.reviewCount || 0)
+    - const safeReviewCount = reviewCount > 0 ? reviewCount : 128
+    - const colorList = product.colors && product.colors.length ? product.colors : ['#111827', '#2563eb', '#f8fafc']
+    - const priceValue = Number(product.price || 0)
+    - const originalValue = Number(product.originalPrice || 0)
+    - const hasDiscount = originalValue > priceValue && originalValue > 0
+    - const discountPct = hasDiscount ? Math.round(((originalValue - priceValue) / originalValue) * 100) : 0
+    - const roundedRating = Math.max(0, Math.min(5, Math.round(ratingValue)))
+    - const isAvailable = product.inStock !== false && Number(product.stock || 0) > 0
+    - const gallery = product.image ? [product.image, product.image, product.image] : []
+    .container.product-detail
+      nav.breadcrumbs
+        a(href="/") Home
+        span.sep /
+        a(href="/shop") Shop
+        span.sep /
+        span= product.name
+      .product-detail-grid
+        .product-images(data-reveal="up")
+          .product-media.product-detail-media
+            if product.image && product.image.length > 0
+              img#product-main-image(src=imageUrl(product.image), alt=product.name, loading="eager", decoding="async")
+            else
+              span.no-image []
 
-      .product-info
-        .section-head(style="flex-direction: column; align-items: flex-start; margin-bottom: 1.5rem;")
-          h1(style="font-size: 2.5rem; margin: 0; color: #1a1a1a;")= product.name
-          span.badge(style="background: linear-gradient(135deg, #ff6b35 0%, #ff5722 100%); color: white; padding: 0.5rem 1.5rem; border-radius: 25px; width: fit-content; margin-top: 0.5rem; font-weight: 600;")= product.category || 'Uncategorized'
+          if product.highlights && product.highlights.length
+            .card(data-reveal="up" data-reveal-delay="70")
+              h3 Quick Highlights
+              ul.info-list
+                each item in product.highlights
+                  li= item
 
-        .price(style="font-size: 2.5rem; color: #ff6b35; font-weight: 700; margin: 1.5rem 0;") $#{Number(product.price || 0).toFixed(2)}
+        .product-info
+          .product-header(data-reveal="up")
+            h1= product.name
+            if product.category
+              span.badge.badge-surface= product.category
 
-        if product.description
-          .card(style="margin: 1.5rem 0; padding: 1.5rem; background: #f9f9f9; border-left: 4px solid #ff6b35; border-radius: 8px;")
-            h3(style="margin-top: 0; color: #1a1a1a;") 📋 Description
-            p(style="margin: 0; color: #555; line-height: 1.8;")= product.description
+          if product.model || product.sku
+            .product-meta(style="margin-bottom: 0.75rem;" data-reveal="fade" data-reveal-delay="60")
+              if product.model
+                span(style="margin-right: 0.75rem;") Model: #{product.model}
+              if product.sku
+                span SKU: #{product.sku}
 
-        .card(style="margin: 1.5rem 0; padding: 1.5rem; background: #f9f9f9; border-radius: 8px;")
-          if product.inStock
-            p(style="color: #4caf50; font-weight: 700; margin: 0; font-size: 1.1rem;") ✅ In Stock
-            if product.stock
-              p(style="color: #666; font-weight: 600; margin: 0.5rem 0;") Available: #{product.stock} units
-          else
-            p(style="color: #f44336; font-weight: 700; margin: 0; font-size: 1.1rem;") ❌ Out of Stock
+          .product-rating.large(data-reveal="up" data-reveal-delay="90")
+            span.rating-stars= '★★★★★'.slice(0, roundedRating) + '☆☆☆☆☆'.slice(0, 5 - roundedRating)
+            span.rating-count #{ratingValue.toFixed(1)} (#{safeReviewCount} reviews)
+
+          .trust-row(data-reveal="up" data-reveal-delay="120")
+            span Secure checkout
+            span Free returns
+            span Ships in 24-48 hrs
+
+          if user && user.role !== 'admin'
+            .card.rating-card(data-reveal="up" data-reveal-delay="150")
+              h3 Rate this product
+              form.rating-form(action=`/product/${product._id}/rate` method="POST")
+                .rating-input
+                  - const ratingChoices = [5, 4, 3, 2, 1]
+                  each r in ratingChoices
+                    input(type="radio" id=`rate-${r}` name="rating" value=r required)
+                    label.rating-star(for=`rate-${r}`) &#9733;
+                button.btn(type="submit") Submit rating
+          else if !user
+            .card.rating-card(data-reveal="up" data-reveal-delay="150")
+              h3 Rate this product
+              p.text-muted Log in to leave a rating.
+              a.btn.btn-outline(href="/login") Log in
+
+          .price-row.large(data-reveal="up" data-reveal-delay="180")
+            span.price-current $#{priceValue.toFixed(2)}
+            if hasDiscount
+              span.price-original $#{originalValue.toFixed(2)}
+              span.price-discount Save #{discountPct}%
+
+          .card(data-reveal="up" data-reveal-delay="210")
+            h3 Color Options
+            .swatch-row
+              each color in colorList
+                span.swatch(style=`--swatch:${color}` title=color)
+
+          if product.description
+            .card(data-reveal="up" data-reveal-delay="240")
+              h3 Description
+              p= product.description
+
+          .card(data-reveal="up" data-reveal-delay="270")
+            if isAvailable
+              p.stock-note In stock
+              if product.stock
+                p.product-meta #{product.stock} units available
+            else
+              p.stock-note.out Out of stock
+
+          if !user || user.role !== 'admin'
+            if isAvailable
+              form.product-form(action="/cart/add" method="POST" data-reveal="up" data-reveal-delay="300")
+                input(type="hidden" name="productId" value=product._id)
+                button.btn(type="submit") Add to Cart
+            else
+              button.btn(type="button" disabled data-reveal="up" data-reveal-delay="300") Out of Stock
+
+      if recommendations && recommendations.length > 0
+        .card(data-reveal="up")
+          h3 Customers Also Liked
+          .products-grid(data-stagger="70")
+            each rec in recommendations
+              - const recPrice = Number(rec.price || 0)
+              - const recOriginal = Number(rec.originalPrice || 0)
+              - const recHasDiscount = recOriginal > recPrice && recOriginal > 0
+              .product(data-reveal="scale")
+                .product-media
+                  if rec.image && rec.image.length > 0
+                    img(src=imageUrl(rec.image), alt=rec.name, loading="lazy", decoding="async")
+                  else
+                    span.no-image []
+                .product-body
+                  h3= rec.name
+                  .price-row
+                    span.price-current $#{recPrice.toFixed(2)}
+                    if recHasDiscount
+                      span.price-original $#{recOriginal.toFixed(2)}
+                  a.btn.btn-outline(href='/product/' + rec._id) View Details
+
+block scripts
+  script(src="/js/product-gallery.js")

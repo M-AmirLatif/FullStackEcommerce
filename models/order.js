@@ -1,6 +1,15 @@
 const mongoose = require('mongoose')
 
 const orderSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  idempotencyKey: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
   customerName: {
     type: String,
     required: true,
@@ -8,6 +17,27 @@ const orderSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
+  },
+  shipping: {
+    phone: String,
+    address: String,
+    city: String,
+    state: String,
+    zip: String,
+    country: String,
+  },
+  payment: {
+    provider: { type: String, default: 'demo' },
+    status: {
+      type: String,
+      enum: ['pending', 'succeeded', 'failed', 'refunded'],
+      default: 'pending',
+    },
+    transactionId: { type: String, default: '' },
+  },
+  paidAt: {
+    type: Date,
+    default: null,
   },
   items: [
     {
@@ -26,7 +56,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Confirmed', 'Cancelled'],
+    enum: ['Pending', 'Paid', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'],
     default: 'Pending',
   },
   createdAt: {
